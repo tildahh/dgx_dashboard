@@ -1,0 +1,8 @@
+name: dgx_dashboard
+publish_to: none
+
+environment:
+  sdk: '^3.9.0'
+
+dependencies:
+  lints: ^6.0.0

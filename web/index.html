@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DGX Dashboard</title>
+    <link rel="icon" href="data:,">
+</head>
+<body>
+    <h1>DGX Dashboard</h1>
+    <div id="status">Connecting...</div>
+    <div id="messages"></div>
+
+    <script>
+        const messagesDiv = document.getElementById('messages');
+        const statusDiv = document.getElementById('status');
+        
+        function connect() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const ws = new WebSocket(`${protocol}//${window.location.host}/ws`);
+            
+            ws.onopen = () => {
+                statusDiv.textContent = 'Connected';
+                statusDiv.style.color = '#4ec9b0';
+            };
+            
+            ws.onmessage = (event) => {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'message';
+                messageDiv.textContent = event.data;
+                messagesDiv.appendChild(messageDiv);
+                
+                // Auto-scroll to bottom
+                window.scrollTo(0, document.body.scrollHeight);
+            };
+            
+            ws.onerror = (error) => {
+                statusDiv.textContent = 'Error';
+                statusDiv.style.color = '#f48771';
+                console.error('WebSocket error:', error);
+            };
+            
+            ws.onclose = () => {
+                statusDiv.textContent = 'Disconnected - Reconnecting...';
+                statusDiv.style.color = '#ce9178';
+                setTimeout(connect, 1000);
+            };
+        }
+        
+        connect();
+    </script>
+</body>
+</html>
