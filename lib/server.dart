@@ -36,6 +36,10 @@ class Server {
     return (gpu: gpu, cpu: cpu, temperature: temperature, memory: memory);
   });
 
+  /// A buffer of the last 10 events so that when a new client connects
+  /// we can provide some immediate history.
+  final _clientMetricsBuffer = <Map<String, Object?>>[];
+
   final Set<WebSocket> _connectedClients = {};
 
   StreamSubscription<_Metrics>? _metricsSubscription;
@@ -83,6 +87,11 @@ class Server {
     ws.pingInterval = const Duration(seconds: 5);
 
     _connectedClients.add(ws);
+
+    // Immediately transmit the recent history.
+    for (final message in _clientMetricsBuffer) {
+      ws.add(jsonEncode(message));
+    }
 
     // Ensure we're running when a client connects.
     _startMetricsStream();
@@ -148,7 +157,7 @@ class Server {
 
     print('Starting metrics stream');
     _metricsSubscription = metricsStream.listen((ev) {
-      final messageJson = {
+      final message = {
         'gpu': {
           'usagePercent': ev.gpu.usagePercent,
           'powerW': ev.gpu.powerW,
@@ -163,13 +172,21 @@ class Server {
           'availableKB': ev.memory.availableKB,
           'totalKB': ev.memory.totalKB,
         },
+        'keepEvents': keepEvents,
         'nextPollSeconds': pollSeconds,
       };
 
+      // Keep a buffer of events to send to new clients.
+      _clientMetricsBuffer.add(message);
+      if (_clientMetricsBuffer.length > keepEvents) {
+        _clientMetricsBuffer.length = keepEvents;
+      }
+
       // Send to all connected clients.
+      final jsonPayload = jsonEncode(message);
       for (final client in _connectedClients.toList()) {
         try {
-          client.add(jsonEncode(messageJson));
+          client.add(jsonPayload);
         } catch (e) {
           print('Error sending to client: $e');
         }
