@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:async/async.dart';
 import 'package:mime/mime.dart';
 import 'package:path/path.dart' as path;
 
@@ -43,6 +44,19 @@ class Server {
   final Set<WebSocket> _connectedClients = {};
 
   StreamSubscription<_Metrics>? _metricsSubscription;
+
+  /// A timer that clears the data buffer a few seconds after the last client
+  /// disconnects. This allows us to resend recent data to a client that
+  /// might just be refreshing, but won't send stale data to the first client
+  /// after a while.
+  late final _clearBufferTimer = RestartableTimer(Duration(seconds: 5), () {
+    if (_connectedClients.isNotEmpty) return;
+
+    if (_metricsSubscription case final sub? when sub.isPaused) {
+      _clientMetricsBuffer.clear();
+      print('Cleared data buffer');
+    }
+  });
 
   /// Creates a server to serve the dashboard.
   Server(
@@ -102,14 +116,32 @@ class Server {
       },
       onDone: () {
         if (_connectedClients.remove(ws)) {
-          // Pause stream if this was the last one.
-          if (_connectedClients.isEmpty) {
-            _metricsSubscription?.pause();
-            print('Paused metrics stream (no clients)');
-          }
+          _pauseStreamIfNoClients();
         }
       },
     );
+  }
+
+  void _pauseStreamIfNoClients() {
+    if (_connectedClients.isNotEmpty) return;
+
+    if (_metricsSubscription case final sub? when !sub.isPaused) {
+      _metricsSubscription?.pause();
+      print('Paused metrics stream');
+
+      _clearBufferTimer.reset();
+    }
+  }
+
+  void _resumeStreamIfClients() {
+    if (_connectedClients.isEmpty) return;
+
+    if (_metricsSubscription case final sub? when sub.isPaused) {
+      _metricsSubscription?.resume();
+      print('Resumed metrics stream');
+
+      _clearBufferTimer.cancel();
+    }
   }
 
   Future<void> _serveStaticFile(HttpRequest request) async {
@@ -147,11 +179,8 @@ class Server {
   }
 
   void _startMetricsStream() {
-    if (_metricsSubscription case final metricsSubscription?) {
-      if (metricsSubscription.isPaused) {
-        print('Resumed metrics stream');
-        metricsSubscription.resume();
-      }
+    if (_metricsSubscription != null) {
+      _resumeStreamIfClients();
       return;
     }
 
@@ -192,10 +221,7 @@ class Server {
         }
       }
 
-      // Pause if no clients.
-      if (_connectedClients.isEmpty) {
-        _metricsSubscription?.pause();
-      }
+      _pauseStreamIfNoClients();
     });
   }
 }

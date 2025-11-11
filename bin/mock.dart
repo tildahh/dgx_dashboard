@@ -51,7 +51,6 @@ class MockGpuMonitor implements GpuMonitor {
   }();
 
   GpuMetrics _computeNext([_]) {
-    print('computing!');
     _currentPercent = (_currentPercent + (_random.nextInt(20) - 10)).clamp(
       0,
       100,
