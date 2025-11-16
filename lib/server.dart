@@ -45,18 +45,15 @@ class Server {
 
   StreamSubscription<_Metrics>? _metricsSubscription;
 
-  /// A timer that clears the data buffer a few seconds after the last client
-  /// disconnects. This allows us to resend recent data to a client that
-  /// might just be refreshing, but won't send stale data to the first client
-  /// after a while.
-  late final _clearBufferTimer = RestartableTimer(Duration(seconds: 5), () {
-    if (_connectedClients.isNotEmpty) return;
-
-    if (_metricsSubscription case final sub? when sub.isPaused) {
-      _clientMetricsBuffer.clear();
-      print('Cleared data buffer');
-    }
-  });
+  /// A timer that pauses metrics gathering and clears the data buffer a few
+  /// seconds after the last client disconnects. This allows us to keep tracking
+  /// and resend recent data to a client that might just be refreshing, but
+  /// won't use resources or send stale data for a client that comes back after
+  /// a longer period.
+  late final _suspendTimer = RestartableTimer(
+    Duration(seconds: 15),
+    _pauseStreamIfNoClients,
+  );
 
   /// Creates a server to serve the dashboard.
   Server(
@@ -116,7 +113,7 @@ class Server {
       },
       onDone: () {
         if (_connectedClients.remove(ws)) {
-          _pauseStreamIfNoClients();
+          _suspendTimer.reset();
         }
       },
     );
@@ -127,9 +124,8 @@ class Server {
 
     if (_metricsSubscription case final sub? when !sub.isPaused) {
       _metricsSubscription?.pause();
-      print('Paused metrics stream');
-
-      _clearBufferTimer.reset();
+      _clientMetricsBuffer.clear();
+      print('Paused metrics stream and cleared data buffer');
     }
   }
 
@@ -140,7 +136,7 @@ class Server {
       _metricsSubscription?.resume();
       print('Resumed metrics stream');
 
-      _clearBufferTimer.cancel();
+      _suspendTimer.cancel();
     }
   }
 
@@ -220,8 +216,6 @@ class Server {
           print('Error sending to client: $e');
         }
       }
-
-      _pauseStreamIfNoClients();
     });
   }
 }
