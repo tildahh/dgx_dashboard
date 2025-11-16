@@ -297,6 +297,12 @@ function updateCharts(data) {
 	memoryLineChart.data.labels = Array.from({ length: memoryHistory.length }, (_, i) => i + 1);
 	memoryLineChart.data.datasets[0].data = [...memoryHistory];
 	memoryLineChart.update('none');
+
+	// Update browser tab title.
+	const maxUsage = Math.max(data.gpu.usagePercent, data.cpu.usagePercent);
+	const maxTemp = Math.max(data.gpu.temperatureC, data.temperature.systemTemperatureC);
+	document.title = `DGX ${Math.trunc(usedGB).toFixed(0)}GB ${maxUsage.toFixed(0)}% ${maxTemp.toFixed(0)}°`;
+
 }
 
 const statusDiv = document.getElementById('status');

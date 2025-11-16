@@ -7,6 +7,7 @@ A simple dashboard for the DGX Spark with some slight differences to the built-i
 - Includes GPU power draw
 - Includes CPU usage
 - Includes GPU and system temperatures
+- Includes stats in browser tab title
 
 Metrics update every 5s and are only collected while there is a connected client.
 
