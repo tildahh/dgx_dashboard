@@ -54,4 +54,24 @@ class DockerMonitor {
       return [];
     }
   }
+
+  /// Starts the container with [id].
+  Future<bool> startContainer(String id) async {
+    try {
+      final result = await Process.run('docker', ['start', id]);
+      return result.exitCode == 0;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /// Stops the container with [id].
+  Future<bool> stopContainer(String id) async {
+    try {
+      final result = await Process.run('docker', ['stop', id]);
+      return result.exitCode == 0;
+    } catch (e) {
+      return false;
+    }
+  }
 }

@@ -121,6 +121,10 @@ h1 {
 	font-weight: bold;
 }
 
+.docker-table tr:hover {
+	background-color: #f0f0f9;
+}
+
 .docker-table tr:last-child td {
 	border-bottom: none;
 }
@@ -158,4 +162,34 @@ h1 {
 .detail {
 	color: #999;
 	font-size: 0.75em;
+}
+
+.actions button {
+	min-width: 80px;
+	padding: 4px 8px;
+	border: 1px solid #ccc;
+	border-radius: 4px;
+	background-color: #fff;
+	cursor: pointer;
+	font-size: 0.9em;
+}
+
+.actions button:hover {
+	background-color: #f0f0f0;
+}
+
+.start-btn {
+	color: #009068;
+}
+
+.stop-btn {
+	color: #c53030;
+}
+
+.actions button:disabled {
+	opacity: 0.5;
+	cursor: default;
+	background-color: #f5f5f5;
+	border-color: #ddd;
+	color: #999;
 }

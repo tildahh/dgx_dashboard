@@ -1,4 +1,5 @@
 let usageChart, tempChart, memoryGauge, memoryLineChart;
+let ws;
 
 // Historical data for line charts.
 const historySize = 10;
@@ -334,8 +335,40 @@ function updateDocker(data) {
 		badge.textContent = statusLabel;
 		badge.classList.add(statusClass);
 
+		const startBtn = clone.querySelector('.start-btn');
+		const stopBtn = clone.querySelector('.stop-btn');
+		stopBtn.onclick = () => stopContainer(stopBtn, container.id);
+		startBtn.onclick = () => startContainer(startBtn, container.id);
+
+		const isDashboard = container.names.includes('dgx_dashboard') || container.image.includes('dgx_dashboard');
+
+		if (isRunning) {
+			startBtn.style.display = 'none';
+			if (isDashboard)
+				stopBtn.disabled = true;
+		} else {
+			stopBtn.style.display = 'none';
+		}
+
 		tableBody.appendChild(clone);
 	});
+}
+
+function startContainer(btn, id) {
+	if (ws && ws.readyState === WebSocket.OPEN) {
+		ws.send(JSON.stringify({ command: 'docker-start', id }));
+		btn.textContent = 'Starting…'
+		btn.disabled = true;
+	}
+}
+
+function stopContainer(btn, id) {
+	if (!confirm('Are you sure you want to stop this container?')) return;
+	if (ws && ws.readyState === WebSocket.OPEN) {
+		ws.send(JSON.stringify({ command: 'docker-stop', id }));
+		btn.textContent = 'Stopping…'
+		btn.disabled = true;
+	}
 }
 
 const statusDiv = document.getElementById('status');
@@ -356,7 +389,7 @@ function startProgressBar(seconds) {
 
 function connect() {
 	const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-	const ws = new WebSocket(`${protocol}//${window.location.host}/ws`);
+	ws = new WebSocket(`${protocol}//${window.location.host}/ws`);
 
 	ws.onopen = () => {
 		statusDiv.textContent = 'Connected';

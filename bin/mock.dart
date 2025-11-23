@@ -42,28 +42,77 @@ class MockCpuMonitor implements CpuMonitor {
 /// A mock implementation of [DockerMonitor] that returns some hard-coded
 /// values.
 class MockDockerMonitor implements DockerMonitor {
+  final _containers = <DockerContainer>[
+    (
+      id: 'a1b2c3d4e5f6',
+      image: 'fake-web-server:latest',
+      command: '/docker-entrypoint.sh serve',
+      created: '2025-11-18 19:01:02',
+      status: 'Up 2 hours',
+      ports: '0.0.0.0:80->80/tcp',
+      names: 'web-server',
+    ),
+    (
+      id: 'f6e5d4c3b2a1',
+      image: 'postgres:13',
+      command: 'docker-entrypoint.sh postgres',
+      created: '2025-11-18 01:00:00',
+      status: 'Exited (0) 10 minutes ago',
+      ports: '',
+      names: 'db-server',
+    ),
+    (
+      id: 'd4c3b2a1f6e5',
+      image: 'dgx_dashboard:latest',
+      command: '/app/bin/server',
+      created: '2025-11-18 10:00:00',
+      status: 'Up 5 hours',
+      ports: '0.0.0.0:8080->8080/tcp',
+      names: 'dgx_dashboard',
+    ),
+  ];
+
   @override
   Future<List<DockerContainer>> getContainers() async {
-    return [
-      (
-        id: 'a1b2c3d4e5f6',
-        image: 'fake-web-server:latest',
-        command: '/docker-entrypoint.sh serve',
-        created: '2025-11-18 19:01:02',
-        status: 'Up 2 hours',
-        ports: '0.0.0.0:80->80/tcp',
-        names: 'web-server',
-      ),
-      (
-        id: 'f6e5d4c3b2a1',
-        image: 'postgres:13',
-        command: 'docker-entrypoint.sh postgres',
-        created: '2025-11-18 01:00:00',
-        status: 'Exited (0) 10 minutes ago',
-        ports: '',
-        names: 'db-server',
-      ),
-    ];
+    return _containers;
+  }
+
+  @override
+  Future<bool> startContainer(String id) async {
+    final index = _containers.indexWhere((c) => c.id == id);
+    if (index != -1) {
+      final container = _containers[index];
+      _containers[index] = (
+        id: container.id,
+        image: container.image,
+        command: container.command,
+        created: container.created,
+        status: 'Up 1 second',
+        ports: container.ports,
+        names: container.names,
+      );
+      return true;
+    }
+    return false;
+  }
+
+  @override
+  Future<bool> stopContainer(String id) async {
+    final index = _containers.indexWhere((c) => c.id == id);
+    if (index != -1) {
+      final container = _containers[index];
+      _containers[index] = (
+        id: container.id,
+        image: container.image,
+        command: container.command,
+        created: container.created,
+        status: 'Exited (0) 1 minute ago',
+        ports: container.ports,
+        names: container.names,
+      );
+      return true;
+    }
+    return false;
   }
 }
 

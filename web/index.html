@@ -53,6 +53,7 @@
             <table class="docker-table">
                 <thead>
                     <tr>
+                        <th width="1"></th>
                         <th>Name</th>
                         <th>Status</th>
                         <th>Ports</th>
@@ -62,6 +63,10 @@
             </table>
             <template id="docker-row-template">
                 <tr>
+                    <td class="actions">
+                        <button class="start-btn">Start</button>
+                        <button class="stop-btn">Stop</button>
+                    </td>
                     <td>
                         <span class="name"></span>
                         <span class="image detail"></span>

@@ -81,6 +81,7 @@ class Server {
     final now = DateTime.now();
     if (now.difference(_lastDockerUpdate).inSeconds > dockerPollSeconds) {
       _latestDockerContainers = await _dockerMonitor.getContainers();
+      _latestDockerContainers.sort((c1, c2) => c1.names.compareTo(c2.names));
       _lastDockerUpdate = now;
     }
     return _latestDockerContainers;
@@ -120,8 +121,22 @@ class Server {
     _startMetricsStream();
 
     ws.listen(
-      (data) {
-        // TODO: Handle incoming messages if required.
+      (data) async {
+        try {
+          final message = jsonDecode(data as String);
+          if (message case {'command': 'docker-start', 'id': final String id}) {
+            await _dockerMonitor.startContainer(id);
+            _lastDockerUpdate = DateTime.fromMillisecondsSinceEpoch(0);
+          } else if (message case {
+            'command': 'docker-stop',
+            'id': final String id,
+          }) {
+            await _dockerMonitor.stopContainer(id);
+            _lastDockerUpdate = DateTime.fromMillisecondsSinceEpoch(0);
+          }
+        } catch (e) {
+          log('Error handling message:\n$data:\n$e');
+        }
       },
       onDone: () {
         if (_connectedClients.remove(ws)) {
