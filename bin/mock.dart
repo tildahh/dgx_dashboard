@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:core';
 import 'dart:io';
 import 'dart:math';
@@ -87,14 +88,18 @@ class MockDockerMonitor implements DockerMonitor {
     final index = _containers.indexWhere((c) => c.id == id);
     if (index != -1) {
       final container = _containers[index];
-      _containers[index] = (
-        id: container.id,
-        image: container.image,
-        command: container.command,
-        created: container.created,
-        status: 'Up 1 second',
-        ports: container.ports,
-        names: container.names,
+      unawaited(
+        Future<void>.delayed(const Duration(seconds: 7)).then((_) {
+          _containers[index] = (
+            id: container.id,
+            image: container.image,
+            command: container.command,
+            created: container.created,
+            status: 'Up 1 second',
+            ports: container.ports,
+            names: container.names,
+          );
+        }),
       );
       return true;
     }
@@ -106,14 +111,18 @@ class MockDockerMonitor implements DockerMonitor {
     final index = _containers.indexWhere((c) => c.id == id);
     if (index != -1) {
       final container = _containers[index];
-      _containers[index] = (
-        id: container.id,
-        image: container.image,
-        command: container.command,
-        created: container.created,
-        status: 'Exited (0) 1 minute ago',
-        ports: container.ports,
-        names: container.names,
+      unawaited(
+        Future<void>.delayed(const Duration(seconds: 6)).then((_) {
+          _containers[index] = (
+            id: container.id,
+            image: container.image,
+            command: container.command,
+            created: container.created,
+            status: 'Exited (0) 1 minute ago',
+            ports: container.ports,
+            names: container.names,
+          );
+        }),
       );
       return true;
     }

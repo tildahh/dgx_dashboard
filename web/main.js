@@ -8,6 +8,31 @@ const cpuHistory = [];
 const gpuTempHistory = [];
 const systemTempHistory = [];
 const memoryHistory = [];
+const pendingCommands = {};
+
+const dockerActions = {
+	'docker-start': {
+		label: 'Start',
+		pendingLabel: 'Starting…',
+		selector: '.start-btn',
+		shouldShow: (isRunning, isDashboard) => !isRunning,
+		confirm: null
+	},
+	'docker-stop': {
+		label: 'Stop',
+		pendingLabel: 'Stopping…',
+		selector: '.stop-btn',
+		shouldShow: (isRunning, isDashboard) => isRunning && !isDashboard,
+		confirm: 'Are you sure you want to stop this container?'
+	},
+	'docker-restart': {
+		label: 'Restart',
+		pendingLabel: 'Starting…',
+		selector: '.restart-btn',
+		shouldShow: (isRunning, isDashboard) => isRunning && isDashboard,
+		confirm: 'Are you sure you want to restart this container?'
+	}
+};
 
 // Consistent colors for GPU and CPU.
 const GPU_COLOR = 'rgb(75, 192, 192)';
@@ -335,50 +360,54 @@ function updateDocker(data) {
 		badge.textContent = statusLabel;
 		badge.classList.add(statusClass);
 
-		const startBtn = clone.querySelector('.start-btn');
-		const stopBtn = clone.querySelector('.stop-btn');
-		const restartBtn = clone.querySelector('.restart-btn');
-		stopBtn.onclick = () => stopContainer(stopBtn, container.id);
-		startBtn.onclick = () => startContainer(startBtn, container.id);
-		restartBtn.onclick = () => restartContainer(restartBtn, container.id);
-
 		const isDashboard = container.names.includes('dgx_dashboard') || container.image.includes('dgx_dashboard');
 
-		if (!isDashboard)
-			restartBtn.style.display = 'none';
+		// Check for pending commands
+		let pending = pendingCommands[container.id];
+		if (pending) {
+			const elapsed = Date.now() - pending.timestamp;
+			// If 10s or status changed, clear pending
+			if (elapsed >= 10000 || pending.wasRunning !== isRunning) {
+				delete pendingCommands[container.id];
+				pending = null;
+			}
+		}
 
-		if (isRunning)
-			startBtn.style.display = 'none';
+		Object.entries(dockerActions).forEach(([command, action]) => {
+			const btn = clone.querySelector(action.selector);
 
-		if (!isRunning || isDashboard)
-			stopBtn.style.display = 'none';
+			let shouldShow = action.shouldShow(isRunning, isDashboard);
+			let label = action.label;
+			let disabled = false;
+
+			if (pending) {
+				if (pending.command === command) {
+					shouldShow = true;
+					label = action.pendingLabel;
+					disabled = true;
+				} else {
+					shouldShow = false;
+				}
+			}
+
+			btn.style.display = shouldShow ? 'inline-block' : 'none';
+			btn.textContent = label;
+			btn.disabled = disabled;
+			btn.onclick = () => sendDockerCommand(btn, container.id, command, isRunning);
+		});
 
 		tableBody.appendChild(clone);
 	});
 }
 
-function startContainer(btn, id) {
-	if (ws && ws.readyState === WebSocket.OPEN) {
-		ws.send(JSON.stringify({ command: 'docker-start', id }));
-		btn.textContent = 'Starting…'
-		btn.disabled = true;
-	}
-}
+function sendDockerCommand(btn, id, command, wasRunning) {
+	const action = dockerActions[command];
+	if (action.confirm && !confirm(action.confirm)) return;
 
-function stopContainer(btn, id) {
-	if (!confirm('Are you sure you want to stop this container?')) return;
 	if (ws && ws.readyState === WebSocket.OPEN) {
-		ws.send(JSON.stringify({ command: 'docker-stop', id }));
-		btn.textContent = 'Stopping…'
-		btn.disabled = true;
-	}
-}
-
-function restartContainer(btn, id) {
-	if (!confirm('Are you sure you want to restart this container?')) return;
-	if (ws && ws.readyState === WebSocket.OPEN) {
-		ws.send(JSON.stringify({ command: 'docker-restart', id }));
-		btn.textContent = 'Restarting…'
+		pendingCommands[id] = { command, timestamp: Date.now(), wasRunning };
+		ws.send(JSON.stringify({ command, id }));
+		btn.textContent = action.pendingLabel;
 		btn.disabled = true;
 	}
 }
