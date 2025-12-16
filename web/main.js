@@ -1,6 +1,55 @@
 let usageChart, tempChart, memoryGauge, memoryLineChart;
 let ws;
 
+// Change from dark/light to light/dark mode with a button.
+const THEME_KEY = 'dgx-dashboard-theme';
+
+function getSavedTheme() {
+	const t = localStorage.getItem(THEME_KEY);
+	return (t === 'dark' || t === 'light') ? t : null;
+}
+
+function getSystemTheme() {
+	return (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)
+		? 'dark'
+		: 'light';
+}
+
+function applyTheme(theme) {
+	document.documentElement.dataset.theme = theme;
+
+	const btn = document.getElementById('theme-toggle');
+	if (btn) {
+		btn.setAttribute('aria-pressed', theme === 'dark' ? 'true' : 'false');
+		btn.title = theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode';
+	}
+}
+
+function initTheme() {
+	// Use saved theme if user chose one, otherwise follow OS/browser preference.
+	const saved = getSavedTheme();
+	applyTheme(saved || getSystemTheme());
+
+	// Toggle button
+	const btn = document.getElementById('theme-toggle');
+	if (btn) {
+		btn.addEventListener('click', () => {
+			const cur = document.documentElement.dataset.theme || getSystemTheme();
+			const next = cur === 'dark' ? 'light' : 'dark';
+			localStorage.setItem(THEME_KEY, next);
+			applyTheme(next);
+		});
+	}
+
+	// If user hasn't chosen a theme, keep following system changes.
+	const mql = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)');
+	if (mql && mql.addEventListener) {
+		mql.addEventListener('change', () => {
+			if (!getSavedTheme()) applyTheme(getSystemTheme());
+		});
+	}
+}
+
 // Historical data for line charts.
 const historySize = 10;
 const gpuHistory = [];
@@ -415,20 +464,6 @@ function sendDockerCommand(btn, id, command, wasRunning) {
 }
 
 const statusDiv = document.getElementById('status');
-const progressBar = document.getElementById('progress-bar');
-
-function startProgressBar(seconds) {
-	if (!progressBar) return;
-
-	progressBar.style.transition = 'none';
-	progressBar.style.width = '100%';
-
-	// Force reflow to apply the reset before starting transition.
-	progressBar.offsetHeight;
-
-	progressBar.style.transition = `width ${seconds}s linear`;
-	requestAnimationFrame(() => progressBar.style.width = '0%');
-}
 
 function connect() {
 	const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -437,8 +472,6 @@ function connect() {
 	ws.onopen = () => {
 		statusDiv.textContent = 'Connected';
 		statusDiv.style.color = '#4ec9b0';
-		// Begin progress bar animation assuming default interval of 5 seconds.
-		startProgressBar(5);
 	};
 
 	ws.onmessage = (event) => {
@@ -452,9 +485,6 @@ function connect() {
 
 		updateCharts(data);
 		updateDocker(data);
-
-		// Start or restart the progress bar based on the server-provided interval.
-		startProgressBar(data.nextPollSeconds);
 	};
 
 	ws.onerror = (error) => {
@@ -472,6 +502,7 @@ function connect() {
 
 // Initialize charts when page loads
 document.addEventListener('DOMContentLoaded', () => {
+	initTheme();
 	initCharts();
 	connect();
 });
