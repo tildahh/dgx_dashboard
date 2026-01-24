@@ -331,6 +331,7 @@ h1 {
 	--chart-empty-segment: rgb(230, 230, 230);
 	--gauge-text: #111111;
 	--gauge-text-muted: rgba(0,0,0,0.6);
+	--gauge-empty: #f6f8fa;
   
 	--table-head: rgba(0,0,0,0.04);
 	--table-hover: rgba(0,0,0,0.03);
@@ -360,6 +361,7 @@ h1 {
 	--chart-empty-segment: rgba(255,255,255,0.12);
 	--gauge-text: #ffffff;
 	--gauge-text-muted: rgba(255,255,255,0.7);
+	--gauge-empty: rgba(55, 65, 81, 0.9);
   
 	--table-head: rgba(255,255,255,0.06);
 	--table-hover: rgba(255,255,255,0.05);

@@ -36,11 +36,12 @@ function updateChartsForTheme() {
 		chart.update('none');
 	});
 
-	// Update gauges text colors for theme
+	// Update gauges text and background colors for theme
 	[memoryGauge, gpuGauge].forEach(gauge => {
 		if (!gauge) return;
 		gauge.options.plugins.annotation.annotations.usedLabel.color = colors.gaugeText;
 		gauge.options.plugins.annotation.annotations.totalLabel.color = colors.gaugeTextMuted;
+		gauge.data.datasets[0].backgroundColor[1] = colors.gaugeEmpty;
 		gauge.update();
 	});
 }
@@ -54,8 +55,10 @@ function applyTheme(theme) {
 		btn.title = theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode';
 	}
 
-	// Update charts to use new theme colors
-	updateChartsForTheme();
+	// Update charts to use new theme colors (use requestAnimationFrame to ensure CSS has been applied)
+	requestAnimationFrame(() => {
+		updateChartsForTheme();
+	});
 }
 
 function initTheme() {
@@ -121,7 +124,8 @@ function getChartColors() {
 		text: style.getPropertyValue('--chart-text').trim() || '#666666',
 		emptySegment: style.getPropertyValue('--chart-empty-segment').trim() || 'rgb(230, 230, 230)',
 		gaugeText: style.getPropertyValue('--gauge-text').trim() || '#111111',
-		gaugeTextMuted: style.getPropertyValue('--gauge-text-muted').trim() || 'rgba(0,0,0,0.6)'
+		gaugeTextMuted: style.getPropertyValue('--gauge-text-muted').trim() || 'rgba(0,0,0,0.6)',
+		gaugeEmpty: style.getPropertyValue('--gauge-empty').trim() || 'rgba(0,0,0,0.12)'
 	};
 }
 
@@ -134,11 +138,11 @@ function createGauge(canvasId, label, maxValue, unit = 'GB') {
 		type: 'doughnut',
 		data: {
 			datasets: [{
-				// Foreground: value (solid color) + empty segment (dark)
+				// Foreground: value (solid color) + empty segment
 				data: [0, maxValue],
 				backgroundColor: [
 					'rgb(118, 184, 82)', // Green fill
-					'rgba(55, 65, 81, 0.9)' // Dark empty segment
+					colors.gaugeEmpty // Theme-aware empty segment
 				],
 				borderWidth: 0,
 				circumference: 180,
@@ -250,10 +254,11 @@ function updateGauge(chart, value, maxValue, unit = 'GB') {
 
 	// Always use green - the outer gradient track shows the danger zones
 	const fillColor = 'rgb(118, 184, 82)';
+	const colors = getChartColors();
 
 	chart.data.datasets[0].data = [value, displayMax - value];
 	chart.data.datasets[0].backgroundColor[0] = fillColor;
-	chart.data.datasets[0].backgroundColor[1] = 'rgba(55, 65, 81, 0.9)';
+	chart.data.datasets[0].backgroundColor[1] = colors.gaugeEmpty;
 
 	if (unit === '%') {
 		chart.options.plugins.annotation.annotations.usedLabel.content = `${Math.round(value)} %`;
