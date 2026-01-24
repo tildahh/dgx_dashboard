@@ -1,8 +1,8 @@
 # DGX Spark Dashboard
 
-![A screenshot of the dashboard](screenshot-dark-mode.png)
+![A screenshot of the dashboard](images/screenshot-dark-mode.png)
 
-*[View light mode](screenshot-light-mode.png)*
+*[View light mode](images/screenshot-light-mode.png)*
 
 A lightweight, real-time monitoring dashboard for the [NVIDIA DGX Spark](https://docs.nvidia.com/dgx/dgx-spark/), designed as a more capable alternative to the built-in system monitor.
 
