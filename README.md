@@ -1,19 +1,20 @@
 # DGX Spark Dashboard
 
-![A screenshot of the dashboard](screenshot.png)
+![A screenshot of the dashboard](screenshot-dark-mode.png)
 
-A simple dashboard for the DGX Spark with some slight differences to the built-in dashboard:
+A modern dashboard for the DGX Spark with improvements over the built-in dashboard:
 
-- Binds to `0.0.0.0` so it can be accessed over the network without an SSH tunnel
-- Uses `MemTotal` and `MemAvailable` for accurate memory stats (the built-in dashboard confuses GB and GiB)
-- Includes GPU power draw
-- Includes CPU usage
-- Includes GPU and system temperatures
-- Includes stats in browser tab title
-- Includes a list of Docker containers with CPU/memory usage and Start/Stop buttons
-- Open source with immutable builds on GitHub Container Registry
+- **Dark/light mode** with system preference detection
+- **Memory & GPU gauges** with color-coded threshold indicators
+- **Temperature monitoring** for GPU and system
+- **GPU power draw** display
+- **Docker container management** with Start/Stop/Restart controls
+- **Network accessible** - binds to `0.0.0.0` (no SSH tunnel needed)
+- **Accurate memory stats** - uses `MemTotal`/`MemAvailable` (fixes GB/GiB confusion)
+- **Tab title stats** - shows memory, usage %, and temperature at a glance
+- **Open source** with immutable builds on GitHub Container Registry
 
-Metrics update every 5s and are only collected while there is a connected client. Docker container stats are updated every 10s.
+Metrics update every 5s. Docker stats update every 10s.
 
 
 ## Running on DGX Spark

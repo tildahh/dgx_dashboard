@@ -30,25 +30,26 @@
     </div>
     
     <div class="graphs">
-         <div class="group full">
+        <div class="group quarter">
+            <h3>Memory</h3>
+            <div class="chart-container gauge-container"><canvas id="memory-gauge"></canvas></div>
+        </div>
+        <div class="group three-quarter">
             <h3>Memory Usage</h3>
-            <div class="subgraphs">
-                <div class="subgroup half">
-                    <div class="chart-container small"><canvas id="memory-gauge"></canvas></div>
-                </div>
-                <div class="subgroup half">
-                    <div class="chart-container small"><canvas id="memory-chart"></canvas></div>
-                </div>
-            </div>
+            <div class="chart-container"><canvas id="memory-chart"></canvas></div>
         </div>
-        <div class="group half">
-            <h3>GPU & CPU Usage</h3>
-            <div class="chart-container"><canvas id="usage-chart"></canvas></div>
-            <div id="gpu-power-label" class="power-label">GPU Power: 0 W</div>
+        <div class="group quarter">
+            <h3>GPU</h3>
+            <div class="chart-container gauge-container"><canvas id="gpu-gauge"></canvas></div>
         </div>
-        <div class="group half">
+        <div class="group three-quarter">
             <h3>Temperatures</h3>
-            <div class="chart-container"><canvas id="temp-chart"></canvas></div>
+            <div class="chart-container temp-chart-container"><canvas id="temp-chart"></canvas></div>
+            <div class="gpu-power-widget">
+                <span class="gpu-power-value" id="gpu-power-value">0</span>
+                <span class="gpu-power-unit">W</span>
+                <span class="gpu-power-label">GPU Power</span>
+            </div>
         </div>
         <div class="group full" id="docker-section" style="display: none;">
             <h3>Docker Containers</h3>
