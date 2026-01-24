@@ -538,6 +538,21 @@ function sendDockerCommand(btn, id, command, wasRunning) {
 }
 
 const statusDiv = document.getElementById('status');
+const nvidiaSmiCrashWarningDiv = document.getElementById('nvidia-smi-crash-warning');
+const progressBar = document.getElementById('progress-bar');
+
+function startProgressBar(seconds) {
+	if (!progressBar) return;
+
+	progressBar.style.transition = 'none';
+	progressBar.style.width = '100%';
+
+	// Force reflow to apply the reset before starting transition.
+	progressBar.offsetHeight;
+
+	progressBar.style.transition = `width ${seconds}s linear`;
+	requestAnimationFrame(() => progressBar.style.width = '0%');
+}
 
 function connect() {
 	const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -552,9 +567,12 @@ function connect() {
 		const data = JSON.parse(event.data);
 
 		if (!data.gpu) {
-			statusDiv.textContent = 'nvidia-smi has crashed too many times, click Restart on the dashboard container';
+			statusDiv.innerHTML = 'nvidia-smi failed to start';
 			statusDiv.style.color = '#f48771';
-			console.error('nvidia-smi has crashed, see log output');
+			nvidiaSmiCrashWarningDiv.style.display = null;
+			console.error('nvidia-smi has failed to start');
+		} else {
+			nvidiaSmiCrashWarningDiv.style.display = 'none';
 		}
 
 		updateCharts(data);
