@@ -1,4 +1,4 @@
-let tempChart, memoryGauge, gpuGauge, memoryLineChart;
+let tempChart, memoryGauge, cpuGauge, gpuGauge, memoryLineChart;
 let ws;
 
 // Change from dark/light to light/dark mode with a button.
@@ -37,7 +37,7 @@ function updateChartsForTheme() {
 	});
 
 	// Update gauges text and background colors for theme
-	[memoryGauge, gpuGauge].forEach(gauge => {
+	[memoryGauge, cpuGauge, gpuGauge].forEach(gauge => {
 		if (!gauge) return;
 		gauge.options.plugins.annotation.annotations.usedLabel.color = colors.gaugeText;
 		gauge.options.plugins.annotation.annotations.totalLabel.color = colors.gaugeTextMuted;
@@ -91,6 +91,8 @@ const historySize = 10;
 const gpuTempHistory = [];
 const systemTempHistory = [];
 const memoryHistory = [];
+let maxGpuTemp = 0;
+let maxSystemTemp = 0;
 const pendingCommands = {};
 
 const dockerActions = {
@@ -178,7 +180,7 @@ function createGauge(canvasId, label, maxValue, unit = 'GB') {
 								weight: 'bold'
 							},
 							color: colors.gaugeText,
-							yAdjust: 10,
+							yAdjust: 6,
 							position: {
 								x: 'center',
 								y: '80%'
@@ -262,7 +264,7 @@ function updateGauge(chart, value, maxValue, unit = 'GB') {
 
 	if (unit === '%') {
 		chart.options.plugins.annotation.annotations.usedLabel.content = `${Math.round(value)} %`;
-		chart.options.plugins.annotation.annotations.totalLabel.content = `GPU Utilization`;
+		// totalLabel is already set during createGauge, no need to overwrite
 	} else {
 		chart.options.plugins.annotation.annotations.usedLabel.content = `${value.toFixed(1)} GB`;
 		chart.options.plugins.annotation.annotations.totalLabel.content = `${displayMax} GB available`;
@@ -343,6 +345,7 @@ function initCharts() {
 	});
 
 	memoryGauge = createGauge('memory-gauge', '128 GB available', 128, 'GB');
+	cpuGauge = createGauge('cpu-gauge', 'CPU Utilization', 100, '%');
 	gpuGauge = createGauge('gpu-gauge', 'GPU Utilization', 100, '%');
 
 	const memoryCtx = document.getElementById('memory-chart').getContext('2d');
@@ -429,6 +432,18 @@ function updateCharts(data) {
 	document.getElementById('gpu-power-value').textContent =
 		data.gpu?.powerW?.toFixed(0) ?? '?';
 
+	// Track and display max temps.
+	const currentGpuTemp = data.gpu?.temperatureC ?? 0;
+	const currentSystemTemp = data.temperature?.systemTemperatureC ?? 0;
+	if (currentGpuTemp > maxGpuTemp) {
+		maxGpuTemp = currentGpuTemp;
+	}
+	if (currentSystemTemp > maxSystemTemp) {
+		maxSystemTemp = currentSystemTemp;
+	}
+	document.getElementById('max-gpu-temp-value').textContent = maxGpuTemp.toFixed(0);
+	document.getElementById('max-system-temp-value').textContent = maxSystemTemp.toFixed(0);
+
 	// Update temperature line chart.
 	tempChart.data.labels = Array.from({ length: gpuTempHistory.length }, (_, i) => i + 1);
 	tempChart.data.datasets[0].data = [...gpuTempHistory];
@@ -437,6 +452,10 @@ function updateCharts(data) {
 
 	// Update memory gauge.
 	updateGauge(memoryGauge, memoryUsed, totalGB, 'GB');
+
+	// Update CPU gauge.
+	const cpuUsage = data.cpu?.usagePercent ?? 0;
+	updateGauge(cpuGauge, cpuUsage, 100, '%');
 
 	// Update GPU gauge.
 	const gpuUsage = data.gpu?.usagePercent ?? 0;
@@ -474,7 +493,7 @@ function updateDocker(data) {
 		clone.querySelector('.name').textContent = container.names;
 		clone.querySelector('.ports').textContent = container.ports;
 		clone.querySelector('.cpu').textContent = container.cpu;
-		clone.querySelector('.memory').textContent = container.memory;
+		clone.querySelector('.memory').textContent = container.memory.split(' / ')[0];
 		clone.querySelector('.status').textContent = `${container.status}`;
 
 		const isRunning = container.status.toLowerCase().startsWith('up ');

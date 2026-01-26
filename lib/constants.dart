@@ -8,4 +8,4 @@ const keepEvents = 20;
 const maxNvidiaSmiRestarts = 5;
 
 /// Number of seconds between each metrics poll.
-const pollSeconds = 5;
+const pollSeconds = 2;

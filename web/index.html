@@ -1,102 +1,133 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="color-scheme" content="light dark">
     <title>DGX Dashboard</title>
     <link rel="icon" href="data:,">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="main.css?v=1">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js" 
-            integrity="sha384-jb8JQMbMoBUzgWatfe6COACi2ljcDdZQ2OxczGA3bGNeWe+6DChMTBJemed7ZnvJ" 
-            crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.1.0/dist/chartjs-plugin-annotation.min.js" 
-            integrity="sha384-3N9GHhCtN3CQef6tNfqgZlv7sQLYIkcChN+uaTZ7xVdzKYp/SjBNPxa92+hM7EAY" 
-            crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js"
+        integrity="sha384-jb8JQMbMoBUzgWatfe6COACi2ljcDdZQ2OxczGA3bGNeWe+6DChMTBJemed7ZnvJ"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.1.0/dist/chartjs-plugin-annotation.min.js"
+        integrity="sha384-3N9GHhCtN3CQef6tNfqgZlv7sQLYIkcChN+uaTZ7xVdzKYp/SjBNPxa92+hM7EAY"
+        crossorigin="anonymous"></script>
 </head>
-<body>
-<div class="page">
-    <div id="header">
-        <h1>DGX Spark Dashboard</h1>
-        <span id="status">Connecting...</span>
-        <span id="links">
-            <a class="external" href="https://github.com/DanTup/dgx_dashboard" target="_blank" rel="noopener noreferrer">GitHub</a>
-            <a class="external" href="https://docs.nvidia.com/dgx/dgx-spark/" target="_blank" rel="noopener noreferrer">Docs</a>
-            <a class="external" href="https://forums.developer.nvidia.com/c/accelerated-computing/dgx-spark-gb10" target="_blank" rel="noopener noreferrer">Forums</a>
-            <a class="external" href="https://build.nvidia.com/spark" target="_blank" rel="noopener noreferrer">Resources</a>
-            <button id="theme-toggle" class="theme-toggle" type="button"
-                        aria-label="Toggle theme" aria-pressed="false">🌓</button>
-        </span>
-    </div>
 
-    <div id="nvidia-smi-crash-warning" style="display: none">
-        <h2>nvidia-smi is failing to start</h2>
-        <p>If you have Docker integration enabled, click <code>Restart</code> on the dashboard container below. Otherwise, use <code>docker restart dashboard</code> to restart.</p>
-        <p>
-            If the logs show <em>Failed to initialize NVML: Unknown Error</em>, this is a known issue and can be worked around by configuring Docker to use cgroupfs as the cgroup driver for containers.
-            See <a href="https://forums.developer.nvidia.com/t/failed-to-initialize-nvml-unknown-error-running-nvidia-smi-in-a-docker-container-only-after-some-hours-days/352743/10?u=dannytup">forums.developer.nvidia.com/t/failed-to-initialize...</a>
-            and <a href="https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/troubleshooting.html#containers-losing-access-to-gpus-with-error-failed-to-initialize-nvml-unknown-error">docs.nvidia.com/.../troubleshooting.html</a> for more info.
-        </p>
-    </div>
-    
-    <div class="graphs">
-        <div class="group quarter">
-            <h3>Memory</h3>
-            <div class="chart-container gauge-container"><canvas id="memory-gauge"></canvas></div>
+<body>
+    <div class="page">
+        <div id="header">
+            <h1>DGX Spark Dashboard</h1>
+            <span id="status">Connecting...</span>
+            <span id="links">
+                <a class="external" href="https://github.com/NVIDIA/dgx-spark-playbooks/tree/main" target="_blank"
+                    rel="noopener noreferrer">GitHub Playbooks</a>
+                <a class="external" href="https://docs.nvidia.com/dgx/dgx-spark/" target="_blank"
+                    rel="noopener noreferrer">Docs</a>
+                <a class="external" href="https://forums.developer.nvidia.com/c/accelerated-computing/dgx-spark-gb10"
+                    target="_blank" rel="noopener noreferrer">Forums</a>
+                <a class="external" href="https://build.nvidia.com/spark" target="_blank"
+                    rel="noopener noreferrer">Resources</a>
+                <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Toggle theme"
+                    aria-pressed="false">🌓</button>
+            </span>
         </div>
-        <div class="group three-quarter">
-            <h3>Memory Usage</h3>
-            <div class="chart-container"><canvas id="memory-chart"></canvas></div>
+
+        <div id="nvidia-smi-crash-warning" style="display: none">
+            <h2>nvidia-smi is failing to start</h2>
+            <p>If you have Docker integration enabled, click <code>Restart</code> on the dashboard container below.
+                Otherwise, use <code>docker restart dashboard</code> to restart.</p>
+            <p>
+                If the logs show <em>Failed to initialize NVML: Unknown Error</em>, this is a known issue and can be
+                worked around by configuring Docker to use cgroupfs as the cgroup driver for containers.
+                See <a
+                    href="https://forums.developer.nvidia.com/t/failed-to-initialize-nvml-unknown-error-running-nvidia-smi-in-a-docker-container-only-after-some-hours-days/352743/10?u=dannytup">forums.developer.nvidia.com/t/failed-to-initialize...</a>
+                and <a
+                    href="https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/troubleshooting.html#containers-losing-access-to-gpus-with-error-failed-to-initialize-nvml-unknown-error">docs.nvidia.com/.../troubleshooting.html</a>
+                for more info.
+            </p>
         </div>
-        <div class="group quarter">
-            <h3>GPU</h3>
-            <div class="chart-container gauge-container"><canvas id="gpu-gauge"></canvas></div>
-        </div>
-        <div class="group three-quarter">
-            <h3>Temperatures</h3>
-            <div class="chart-container temp-chart-container"><canvas id="temp-chart"></canvas></div>
-            <div class="gpu-power-widget">
-                <span class="gpu-power-value" id="gpu-power-value">0</span>
-                <span class="gpu-power-unit">W</span>
-                <span class="gpu-power-label">GPU Power</span>
+
+        <div class="graphs">
+            <div class="group quarter">
+                <h3>Memory</h3>
+                <div class="chart-container gauge-container"><canvas id="memory-gauge"></canvas></div>
+            </div>
+            <div class="group three-quarter">
+                <h3>Memory Usage</h3>
+                <div class="chart-container"><canvas id="memory-chart"></canvas></div>
+            </div>
+            <div class="group quarter">
+                <h3>CPU</h3>
+                <div class="chart-container gauge-container"><canvas id="cpu-gauge"></canvas></div>
+            </div>
+            <div class="group quarter">
+                <h3>GPU</h3>
+                <div class="chart-container gauge-container"><canvas id="gpu-gauge"></canvas></div>
+            </div>
+            <div class="group half">
+                <h3>Temperatures</h3>
+                <div class="chart-container temp-chart-container"><canvas id="temp-chart"></canvas></div>
+                <div class="temp-stats">
+                    <div class="gpu-power-widget">
+                        <span class="gpu-power-value" id="gpu-power-value">0</span>
+                        <span class="gpu-power-unit">W</span>
+                        <span class="gpu-power-label">GPU Power</span>
+                    </div>
+                    <div class="gpu-power-widget">
+                        <span class="gpu-power-value" id="max-gpu-temp-value">0</span>
+                        <span class="gpu-power-unit">°</span>
+                        <span class="gpu-power-label">Max GPU</span>
+                    </div>
+                    <div class="gpu-power-widget">
+                        <span class="gpu-power-value" id="max-system-temp-value">0</span>
+                        <span class="gpu-power-unit">°</span>
+                        <span class="gpu-power-label">Max System</span>
+                    </div>
+                </div>
+            </div>
+            <div class="group full" id="docker-section" style="display: none;">
+                <h3>Docker Containers</h3>
+                <table class="docker-table">
+                    <thead>
+                        <tr>
+                            <th width="1"></th>
+                            <th>Name</th>
+                            <th>Status</th>
+                            <th>CPU</th>
+                            <th>Memory</th>
+                            <th>Ports</th>
+                        </tr>
+                    </thead>
+                    <tbody id="docker-table-body"></tbody>
+                </table>
+                <template id="docker-row-template">
+                    <tr>
+                        <td class="actions">
+                            <button class="start-btn">Start</button>
+                            <button class="stop-btn">Stop</button>
+                            <button class="restart-btn">Restart</button>
+                        </td>
+                        <td>
+                            <span class="name"></span>
+                            <span class="image detail"></span>
+                        </td>
+                        <td><span class="status-badge"></span> <span class="status detail"></span></td>
+                        <td class="cpu mono"></td>
+                        <td class="memory mono"></td>
+                        <td class="ports mono"></td>
+                    </tr>
+                </template>
             </div>
         </div>
-        <div class="group full" id="docker-section" style="display: none;">
-            <h3>Docker Containers</h3>
-            <table class="docker-table">
-                <thead>
-                    <tr>
-                        <th width="1"></th>
-                        <th>Name</th>
-                        <th>Status</th>
-                        <th>CPU</th>
-                        <th>Memory</th>
-                        <th>Ports</th>
-                    </tr>
-                </thead>
-                <tbody id="docker-table-body"></tbody>
-            </table>
-            <template id="docker-row-template">
-                <tr>
-                    <td class="actions">
-                        <button class="start-btn">Start</button>
-                        <button class="stop-btn">Stop</button>
-                        <button class="restart-btn">Restart</button>
-                    </td>
-                    <td>
-                        <span class="name"></span>
-                        <span class="image detail"></span>
-                    </td>
-                    <td><span class="status-badge"></span> <span class="status detail"></span></td>
-                    <td class="cpu mono"></td>
-                    <td class="memory mono"></td>
-                    <td class="ports mono"></td>
-                </tr>
-            </template>
-        </div>
     </div>
-</div>
 
-<script src="main.js?v=1"></script>
+    <script src="main.js?v=1"></script>
 </body>
+
 </html>

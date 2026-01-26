@@ -2,22 +2,23 @@
 
 ![A screenshot of the dashboard](images/screenshot-dark-mode.png)
 
-*[View light mode](images/screenshot-light-mode.png)*
 
-A lightweight, real-time monitoring dashboard for the [NVIDIA DGX Spark](https://docs.nvidia.com/dgx/dgx-spark/), designed as a more capable alternative to the built-in system monitor.
+A lightweight, real-time monitoring dashboard for the [NVIDIA DGX Spark](https://docs.nvidia.com/dgx/dgx-spark/), designed with more informative metrics compared to the built-in system monitor.
 
-- **Dark/light mode** switchable theme
+- **Accurate memory stats** - uses `MemTotal` & `MemAvailable` (the built-in dashboard confuses GB and GiB)
 - **CPU & GPU usage** display
-- **Temperature monitoring** for GPU and system
+- **Temperature monitoring** for dedicated GPU sensors and a composite system temperature (see note below)
+- **Peak temperatures** logging across the session
 - **GPU power draw** display
+- **Dark/light mode** switchable theme
 - **Docker container management** with Start/Stop/Restart controls
 - **Network accessible** - binds to `0.0.0.0` (no SSH tunnel needed)
-- **Accurate memory stats** - uses `MemTotal`/`MemAvailable` (fixes GB/GiB confusion)
 - **Tab title stats** - shows memory, usage %, and temperature at a glance
 - **Open source** with immutable builds on GitHub Container Registry
 
-Metrics update every 5s. Docker stats update every 10s.
+Metrics update every 2s. Docker stats update every 10s. *System* tracks the maximum of 7 onboard thermal zones (CPU, memory, VRMs, and chipset) to ensure the hottest component drives the cooling.
 
+*[View in light mode](images/screenshot-light-mode.png)*
 
 ## Running on DGX Spark
 
@@ -65,4 +66,4 @@ docker run -d --gpus all \
 
 ---
 
-*Forked from [DanTup/dgx_dashboard](https://github.com/DanTup/dgx_dashboard)*
+*Adapted and forked from [DanTup/dgx_dashboard](https://github.com/DanTup/dgx_dashboard)*
